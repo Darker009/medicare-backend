@@ -47,6 +47,7 @@ public class SecurityConfig implements WebMvcConfigurer {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()  // Public access for authentication
                 .requestMatchers(HttpMethod.POST, "/api/auth/register/**").permitAll()  // Public access for registration
+                .requestMatchers("api/admin/**").hasAuthority("ADMIN")
                 .anyRequest().authenticated()  // All other requests need authentication
             )
             .sessionManagement(session -> session

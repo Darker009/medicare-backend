@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Optional;
 
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -62,6 +63,13 @@ public class AuthServiceImpl implements AuthService {
     		   return ResponseEntity
     				   .badRequest()
     				   .body("Role must be provided for every users.");
+    	   }
+    	   try {
+    		   role = Role.valueOf(rawRole);
+    	   } catch (IllegalArgumentException e){
+    		   return ResponseEntity
+    				   .badRequest()
+    				   .body("Invalid role specified: "+ rawRole);
     	   }
     }
     	System.out.println(registerRequest.getName());
@@ -101,7 +109,7 @@ public class AuthServiceImpl implements AuthService {
                 break;
 
             case DOCTOR:
-                if (registerRequest.getSpecialization() == null || registerRequest.getSpecialization().trim().isEmpty()) {
+                if (registerRequest.getSpecialization() == null || registerRequest.getSpecialization().isEmpty()) {
                     return ResponseEntity.badRequest().body("Specialization is required for doctors");
                 }
                 if (registerRequest.getExperience() == null) {
@@ -194,4 +202,7 @@ public class AuthServiceImpl implements AuthService {
             throw new RuntimeException("Invalid username or password", ex);
         }
     }
+
+	
+	
 }
