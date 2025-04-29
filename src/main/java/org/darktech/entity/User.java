@@ -1,90 +1,129 @@
 package org.darktech.entity;
 
 import jakarta.persistence.*;
-import org.darktech.enums.Category;
-import java.time.LocalDateTime;
+import org.darktech.enums.Role;
+import org.darktech.enums.UserStatus;
 
 @Entity
-@Table(name = "user")
+@Table(name = "users")
 public class User {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String name;
+    @Column(nullable = false, unique = true, length = 50)
+    private String username;
 
-    @Column(unique = true, nullable = false)
-    private String email;
-
-    @Column(nullable = false)
+    @Column(nullable = false, length = 100)
     private String password;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Category role;
+    private Role role;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private boolean active = true;
+    private UserStatus status;
 
-    @Column(name = "registered_at", nullable = false, updatable = false)
-    private LocalDateTime registeredAt;
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private Admin admin;
 
-    @PrePersist
-    protected void onCreate() {
-        this.registeredAt = LocalDateTime.now();
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private Doctor doctor;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private Reception reception;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private Nurse nurse;
+    
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private UserImage userImage;
+
+    // Getters and Setters
+   
+
+    public String getUsername() {
+        return username;
     }
 
-    public Long getId()
-    {
-        return id;
+    public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public void setUsername(String username) {
+        this.username = username;
     }
-    public void setId(Long id)
-    {
-        this.id = id;
-    }
-    public String getName()
-    {
-        return name;
-    }
-    public void setName(String name) {
-        this.name = name;
-    }
-    public String getEmail()
-    {
-        return email;
-    }
-    public void setEmail(String email)
-    {
-        this.email = email;
-    }
-    public String getPassword()
-    {
+
+    public String getPassword() {
         return password;
     }
-    public void setPassword(String password)
-    {
+
+    public void setPassword(String password) {
         this.password = password;
     }
-    public Category getRole()
-    {
+
+    public Role getRole() {
         return role;
     }
-    public void setRole(Category role)
-    {
+
+    public void setRole(Role role) {
         this.role = role;
     }
-    public boolean isActive()
-    {
-        return active;
+
+    public UserStatus getStatus() {
+        return status;
     }
-    public void setActive(boolean active)
-    {
-        this.active = active;
+
+    public void setStatus(UserStatus status) {
+        this.status = status;
     }
-    public LocalDateTime getRegisteredAt()
-    {
-        return registeredAt;
+
+    public Admin getAdmin() {
+        return admin;
     }
+
+    public void setAdmin(Admin admin) {
+        this.admin = admin;
+    }
+
+    public Doctor getDoctor() {
+        return doctor;
+    }
+
+    public void setDoctor(Doctor doctor) {
+        this.doctor = doctor;
+    }
+
+    public Reception getReception() {
+        return reception;
+    }
+
+    public void setReception(Reception reception) {
+        this.reception = reception;
+    }
+
+	public Nurse getNurse() {
+		return nurse;
+	}
+
+	public void setNurse(Nurse nurse) {
+		this.nurse = nurse;
+	}
+
+	public UserImage getUserImage() {
+		return userImage;
+	}
+
+	public void setUserImage(UserImage userImage) {
+		this.userImage = userImage;
+	}
+
+	
+
+	
 }
