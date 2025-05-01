@@ -1,6 +1,8 @@
 package org.darktech.entity;
 
 import jakarta.persistence.*;
+
+import java.util.Optional;
 import java.util.Set;
 
 import org.darktech.enums.UserStatus;
@@ -34,6 +36,7 @@ public class Doctor {
     @ManyToOne
     @JoinColumn(name = "admin_id", nullable = false)
     private Admin admin;
+
 
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false)
@@ -108,6 +111,7 @@ public class Doctor {
     public void setAdmin(Admin admin) {
         this.admin = admin;
     }
+
 
     public User getUser() {
         return user;

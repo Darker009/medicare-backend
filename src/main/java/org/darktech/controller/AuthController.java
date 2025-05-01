@@ -5,22 +5,25 @@ import java.io.IOException;
 import org.darktech.dto.LoginRequest;
 import org.darktech.dto.LoginResponse;
 import org.darktech.dto.RegisterRequest;
-import org.darktech.repository.DoctorRepository;
+import org.darktech.entity.User;
 import org.darktech.service.AuthService;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "http://localhost:5173", exposedHeaders = "Content-Disposition")
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
     private final AuthService authService;
-    private final DoctorRepository doctorRepository;
-    public AuthController(AuthService authService, DoctorRepository doctorRepository) {
+    
+    
+    public AuthController(AuthService authService) {
         this.authService = authService;
-        this.doctorRepository = doctorRepository;
     }
 
     @PostMapping("/login")
@@ -34,5 +37,17 @@ public class AuthController {
         return authService.register(registerRequest, image);
     }
     
-   
+    @GetMapping("/image/{userId}")
+    public ResponseEntity<byte[]> getUserProfileImage(@PathVariable Long userId) {
+        User user = authService.getUserById(userId);
+        if (user.getImageData() == null || user.getImageType() == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(null);
+        }
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.valueOf(user.getImageType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + user.getImageName() + "\"")
+                .body(user.getImageData());
+    }
 }

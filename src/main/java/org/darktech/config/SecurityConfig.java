@@ -36,6 +36,7 @@ public class SecurityConfig implements WebMvcConfigurer {
                 .allowedOrigins("http://localhost:5173") // Allow frontend URL
                 .allowedMethods("GET", "POST", "PUT", "DELETE")
                 .allowedHeaders("*")
+                .exposedHeaders("Authorization", "Content-Disposition")
                 .allowCredentials(true);
     }
 
@@ -47,8 +48,11 @@ public class SecurityConfig implements WebMvcConfigurer {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()  // Public access for authentication
                 .requestMatchers(HttpMethod.POST, "/api/auth/register/**").permitAll()  // Public access for registration
-                .requestMatchers("api/admin/**").hasAuthority("ADMIN")
-                .anyRequest().authenticated()  // All other requests need authentication
+                .requestMatchers(HttpMethod.GET, "/api/admin/**").hasAuthority("ADMIN")
+                .requestMatchers("/api/doctor/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/auth/image/**").permitAll()
+             .requestMatchers(HttpMethod.OPTIONS, "/api/admin/**").permitAll()                
+             .anyRequest().authenticated()  // All other requests need authentication
             )
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)  // Stateless authentication with JWT

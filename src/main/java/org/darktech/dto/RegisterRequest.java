@@ -3,30 +3,19 @@ package org.darktech.dto;
 import jakarta.validation.constraints.*;
 
 public class RegisterRequest {
-    @NotBlank(message = "Username cannot be blank")
     @Email(message = "Username must be a valid email address")
     private String username;
 
-    @NotBlank(message = "Password cannot be blank")
-    @Size(min = 8, message = "Password must be at least 8 characters long")
     private String password;
 
-    @NotBlank(message = "Role cannot be blank")
     private String role;
 
-    @NotBlank(message = "Name cannot be blank")
-    @Size(min = 2, max = 100, message = "Name must be between 2 and 100 characters")
     private String name;
 
-    @NotBlank(message = "Contact information cannot be blank")
-    @Pattern(regexp = "^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\\s\\./0-9]*$", 
-             message = "Invalid contact number format")
     private String contact;
 
     private String specialization; 
 
-    @Min(value = 0, message = "Experience cannot be negative")
-    @Max(value = 100, message = "Experience cannot exceed 100 years")
     private Integer experience; 
 
     private String shift; 

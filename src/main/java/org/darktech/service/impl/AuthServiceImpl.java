@@ -6,6 +6,7 @@ import org.darktech.dto.LoginRequest;
 import org.darktech.dto.LoginResponse;
 import org.darktech.dto.RegisterRequest;
 import org.darktech.dto.UserResponseDTO;
+import org.darktech.exception.*;
 import org.darktech.entity.*;
 import org.darktech.enums.Role;
 import org.darktech.enums.Shift;
@@ -17,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,7 +26,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.Optional;
 
 @Service
@@ -39,11 +40,9 @@ public class AuthServiceImpl implements AuthService {
     @Autowired private AuthenticationManager authenticationManager;
     @Autowired private JwtUtil jwtUtil;
     @Autowired private CustomUserDetailsService customUserDetailsService;
-    @Autowired private UserImageRepository userImageRepository;
 
     @Override
-    public ResponseEntity<?> register(RegisterRequest registerRequest, MultipartFile image) throws IOException {
-
+    public ResponseEntity<?> register(RegisterRequest registerRequest, MultipartFile image) throws RuntimeException {
         String email = registerRequest.getUsername();
         String password = registerRequest.getPassword();
         String rawRole = registerRequest.getRole();
@@ -54,27 +53,24 @@ public class AuthServiceImpl implements AuthService {
             return ResponseEntity.badRequest().body("Email already exists");
         }
 
-
         Role role = null;
-       if("admin@gmail.com".equalsIgnoreCase(email)) {
-    	   role = Role.ADMIN;
-       } else {
-    	   if(rawRole == null || rawRole.isBlank()) {
-    		   return ResponseEntity
-    				   .badRequest()
-    				   .body("Role must be provided for every users.");
-    	   }
-    	   try {
-    		   role = Role.valueOf(rawRole);
-    	   } catch (IllegalArgumentException e){
-    		   return ResponseEntity
-    				   .badRequest()
-    				   .body("Invalid role specified: "+ rawRole);
-    	   }
-    }
-    	System.out.println(registerRequest.getName());
+        if("admin@gmail.com".equalsIgnoreCase(email)) {
+            role = Role.ADMIN;
+        } else {
+            if(rawRole == null || rawRole.isBlank()) {
+                return ResponseEntity
+                        .badRequest()
+                        .body("Role must be provided for every users.");
+            }
+            try {
+                role = Role.valueOf(rawRole);
+            } catch (IllegalArgumentException e){
+                return ResponseEntity
+                        .badRequest()
+                        .body("Invalid role specified: "+ rawRole);
+            }
+        }
 
-        
         if (role == Role.ADMIN && !email.equals("admin@gmail.com")) {
             return ResponseEntity.badRequest().body("Only predefined admin email can register as ADMIN");
         }
@@ -84,20 +80,25 @@ public class AuthServiceImpl implements AuthService {
         user.setPassword(passwordEncoder.encode(password));
         user.setRole(role);
         user.setStatus(role == Role.ADMIN ? UserStatus.ACTIVE : UserStatus.PENDING);
-        user = userRepository.save(user);
 
         if (image != null && !image.isEmpty()) {
             if (!image.getContentType().startsWith("image/")) {
                 return ResponseEntity.badRequest().body("Only image files are allowed");
             }
-
-            UserImage userImage = new UserImage();
-            userImage.setUser(user);
-            userImage.setImageName(image.getOriginalFilename());
-            userImage.setImageType(image.getContentType());
-            userImage.setImageData(image.getBytes());
-            userImageRepository.save(userImage);
+            
+            try {
+                user.setImageName(image.getOriginalFilename());
+                user.setImageType(image.getContentType());
+                user.setImageData(image.getBytes());
+                
+                user.setProfilePicUrl("/api/users/" + user.getId() + "/image");
+            } catch (Exception e) {
+                throw new InvalidImageException("Invalid image file");
+            }
         }
+
+        // Save the user WITH image data
+        user = userRepository.save(user);
 
         switch (role) {
             case ADMIN:
@@ -125,12 +126,13 @@ public class AuthServiceImpl implements AuthService {
                 doctor.setStatus(UserStatus.PENDING);
                 doctor.setActive(false);
 
-                Admin adminForDoctor = adminRepository.findFirstByOrderByAdminIdAsc();
-                if (adminForDoctor == null) {
+                Optional<Admin> adminForDoctor = adminRepository.findFirstByOrderByAdminIdAsc();
+                if (adminForDoctor.isEmpty()) {
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body("System configuration error: No admin available to assign doctor");
                 }
-                doctor.setAdmin(adminForDoctor);
+                doctor.setAdmin(adminForDoctor.get());
+
                 doctorRepository.save(doctor);
                 break;
 
@@ -150,7 +152,7 @@ public class AuthServiceImpl implements AuthService {
                     return ResponseEntity.badRequest().body("Invalid shift specified for nurse");
                 }
                 
-                nurse.setActive(true); // Nurses might be active by default
+                nurse.setActive(true);
                 nurseRepository.save(nurse);
                 break;
 
@@ -199,10 +201,14 @@ public class AuthServiceImpl implements AuthService {
 
             return new LoginResponse(jwt, userDTO);
         } catch (Exception ex) {
-            throw new RuntimeException("Invalid username or password", ex);
+            throw new BadCredentialsException("Invalid username or password");
         }
+
     }
 
-	
-	
+	@Override
+	public User getUserById(Long userId) {
+    	System.out.println(userId);
+		return userRepository.findById(userId).orElseThrow(() ->  new UserNotFoundException("No User Found with ID: " + userId));
+	}
 }
